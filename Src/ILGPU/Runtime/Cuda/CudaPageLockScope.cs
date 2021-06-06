@@ -32,7 +32,7 @@ namespace ILGPU.Runtime
             CudaAccelerator accelerator,
             IntPtr hostPtr,
             long numElements)
-            : base(accelerator)
+            : base(accelerator, numElements)
         {
             if (!accelerator.Device.SupportsMappingHostMemory)
             {
@@ -40,17 +40,30 @@ namespace ILGPU.Runtime
                     RuntimeErrorMessages.NotSupportedPageLock);
             }
             HostPtr = hostPtr;
-            Length = numElements;
 
+            bool supportsHostPointer = accelerator
+                .Device
+                .SupportsUsingHostPointerForRegisteredMemory;
+
+            // Setup internal memory registration flags.
             var flags = MemHostRegisterFlags.CU_MEMHOSTREGISTER_PORTABLE;
-            if (!accelerator.Device.SupportsUsingHostPointerForRegisteredMemory)
+            if (!supportsHostPointer)
                 flags |= MemHostRegisterFlags.CU_MEMHOSTREGISTER_DEVICEMAP;
-            CudaException.ThrowIfFailed(
-                CurrentAPI.MemHostRegister(
-                    hostPtr,
-                    new IntPtr(LengthInBytes),
-                    flags));
-            if (accelerator.Device.SupportsUsingHostPointerForRegisteredMemory)
+
+            // Perform the memory registration.
+            var cudaError = CurrentAPI.MemHostRegister(
+                hostPtr,
+                new IntPtr(LengthInBytes),
+                flags);
+
+            // Check whether we have already registered this memory pointer.
+            Locked = cudaError != CudaError.CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED;
+            if (cudaError != CudaError.CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED)
+                CudaException.ThrowIfFailed(cudaError);
+
+            // Check whether we have to determine the actual device pointer or are able
+            // to reuse the host pointer for all operations.
+            if (supportsHostPointer)
             {
                 AddrOfLockedObject = hostPtr;
             }
@@ -65,21 +78,26 @@ namespace ILGPU.Runtime
             }
         }
 
-        /// <inheritdoc/>
-        protected override void DisposeAcceleratorObject(bool disposing) =>
-            CudaException.VerifyDisposed(
-                disposing,
-                CurrentAPI.MemHostUnregister(HostPtr));
-
-        /// <inheritdoc/>
-        public override IntPtr AddrOfLockedObject { get; }
-
-        /// <inheritdoc/>
-        public override long Length { get; }
+        /// <summary>
+        /// Returns true if this page-lock scope has locked pages in memory.
+        /// </summary>
+        public bool Locked { get; }
 
         /// <summary>
         /// The host pointer used for registration.
         /// </summary>
         private IntPtr HostPtr { get; }
+
+        /// <inheritdoc/>
+        protected override void DisposeAcceleratorObject(bool disposing)
+        {
+            // Check whether we are the owner.
+            if (!Locked)
+                return;
+
+            CudaException.VerifyDisposed(
+                disposing,
+                CurrentAPI.MemHostUnregister(HostPtr));
+        }
     }
 }
