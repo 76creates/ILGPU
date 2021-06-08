@@ -184,7 +184,7 @@ jobs:
           name: nuget-package
       - name: Tar artifacts
         run: |
-          tar -zcf compiled.tar.gz ./Bin/Release/ILGPU.*.*nupkg
+          tar -zcf compiled.tar.gz ./ILGPU.*.*nupkg
       - name: Create release and upload NuGet package as an asset
         uses: softprops/action-gh-release@v1
         with:
