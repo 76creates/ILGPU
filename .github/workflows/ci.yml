@@ -173,15 +173,32 @@ jobs:
           name: nuget-package
           path: ./Bin/Release/ILGPU.*.*nupkg
 
-  publish-nuget:
+  release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [check-style, build-and-test]
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Download NuGet package artifact
         uses: actions/download-artifact@v2
         with:
           name: nuget-package
-      - name: Publish to NuGet
-        shell: bash
-        run: dotnet nuget push ILGPU.*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+      - name: Tar artifacts
+        run: |
+          tar -zcf compiled.tar.gz ./Bin/Release/ILGPU.*.*nupkg
+      - name: Create release and upload NuGet package as an asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: compiled.tar.gz
+          
+  # publish-nuget:
+  #   if: startsWith(github.ref, 'refs/tags/v')
+  #   needs: [check-style, build-and-test]
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Download NuGet package artifact
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: nuget-package
+  #     - name: Publish to NuGet
+  #       shell: bash
+  #       run: dotnet nuget push ILGPU.*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
