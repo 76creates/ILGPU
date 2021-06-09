@@ -6,6 +6,7 @@ on:
 
 env:
   DOTNET_NOLOGO: true
+  MAIN_BRANCH: master
 
 jobs:
   check-style:
@@ -191,16 +192,29 @@ jobs:
           files: compiled.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-  # publish-nuget:
-  #   if: startsWith(github.ref, 'refs/tags/v')
-  #   needs: [check-style, build-and-test]
-  #   runs-on: windows-latest
-  #   steps:
-  #     - name: Download NuGet package artifact
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: nuget-package
-  #     - name: Publish to NuGet
-  #       shell: bash
-  #       run: dotnet nuget push ILGPU.*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+  
+  publish-nuget-pre-release:
+    if: github.ref == 'refs/heads/${{ env.MAIN_BRANCH }}'
+    needs: [check-style, build-and-test]
+    runs-on: windows-latest
+    steps:
+      - name: Download NuGet package artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: nuget-package
+      - name: Publish to NuGet
+        shell: bash
+        run: dotnet nuget push ILGPU.*.nupkg --api-key ${{ secrets.FEEDZ_IO_ACCESS_TOKEN }} --source https://f.feedz.io/76testing/ilgpu/nuget/index.json
+
+  publish-nuget:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [check-style, build-and-test]
+    runs-on: windows-latest
+    steps:
+      - name: Download NuGet package artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: nuget-package
+      - name: Publish to NuGet
+        shell: bash
+        run: dotnet nuget push ILGPU.*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
