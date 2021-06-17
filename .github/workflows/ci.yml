@@ -6,7 +6,6 @@ on:
 
 env:
   DOTNET_NOLOGO: true
-  MAIN_BRANCH: algorithms
 
 jobs:
   check-style:
@@ -194,7 +193,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
   publish-nuget-pre-release:
-    if: ${{ github.ref == format( 'refs/heads/{0}', github.ref ) }}
+    if: github.ref == 'refs/heads/algorithms'
     needs: [check-style, build-and-test]
     runs-on: windows-latest
     steps:
