@@ -194,6 +194,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
   publish-nuget-pre-release:
+    env:
+      DOTNET_NOLOGO: true
+      MAIN_BRANCH: algorithms
     if: github.ref == format( 'refs/heads/{0}', ${{ env.MAIN_BRANCH }} )
     needs: [check-style, build-and-test]
     runs-on: windows-latest
