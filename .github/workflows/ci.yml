@@ -186,7 +186,8 @@ jobs:
       - name: List packages
         id: list-packages
         run: | 
-          PACKAGES=$(ls ./Bin/Release/ILGPU.*.*nupkg | jq -R -s -c 'split("\n")[:-1]')
+          PACKAGES=$(ls ./ILGPU.*.*nupkg | jq -R -s -c 'split("\n")[:-1]')
+          echo $PACKAGES
           echo "::set-output name=packages::${PACKAGES}"
       - name: Create release and upload NuGet package as an asset
         uses: softprops/action-gh-release@v1
