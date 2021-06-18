@@ -183,13 +183,15 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: nuget-package
-      - name: Tar artifacts
-        run: |
-          tar -zcf compiled.tar.gz ./ILGPU.*.*nupkg
+      - name: List packages
+        id: list-packages
+        run: | 
+          PACKAGES=$(ls ./Bin/Release/ILGPU.*.*nupkg | jq -R -s -c 'split("\n")[:-1]')
+          echo "::set-output name=packages::${PACKAGES}"
       - name: Create release and upload NuGet package as an asset
         uses: softprops/action-gh-release@v1
         with:
-          files: compiled.tar.gz
+          files: ${{fromJSON(steps.list-packages.outputs.packages)}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
