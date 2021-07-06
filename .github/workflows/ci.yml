@@ -95,12 +95,12 @@ jobs:
         run: dotnet new globaljson --sdk-version 3.1.407
       - name: Release Build
         run: dotnet build --configuration=Release -p:TreatWarningsAsErrors=true Src
-      - name: CPU Tests
-        if: matrix.os != 'cuda'
-        run: dotnet test --logger GitHubActions --no-build --configuration=Release Src/${{ matrix.library }}.Tests.CPU
-      - name: CUDA Tests
-        if: matrix.os == 'cuda'
-        run: dotnet test --logger GitHubActions --no-build --configuration=Release Src/${{ matrix.library }}.Tests.Cuda
+      # - name: CPU Tests
+      #   if: matrix.os != 'cuda'
+      #   run: dotnet test --logger GitHubActions --no-build --configuration=Release Src/${{ matrix.library }}.Tests.CPU
+      # - name: CUDA Tests
+      #   if: matrix.os == 'cuda'
+      #   run: dotnet test --logger GitHubActions --no-build --configuration=Release Src/${{ matrix.library }}.Tests.Cuda
 
   package:
     runs-on: windows-latest
@@ -205,7 +205,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: nuget-packages
-          
+
       # if tag cointains suffix "-" treat it as pre-release
       # example: 1.0.0-beta1
       - name: Prerelease logic
