@@ -212,11 +212,11 @@ jobs:
         id: prerelease-logic
         run:
           if [[ ${{ needs.package.outputs.tag }} =~ .+-.+$ ]]
-          then 
-            echo "::set-output name=prerelease::true" 
-          else
+          ;then 
+            echo "::set-output name=prerelease::true"
+          ;else
             echo "::set-output name=prerelease::false" 
-          fi
+          ;fi
 
       - name: Create release
         uses: softprops/action-gh-release@v1
